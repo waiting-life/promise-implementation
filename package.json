@@ -3,6 +3,6 @@
     "promises-aplus-tests": "^2.1.2"
   },
   "scripts": {
-    "test": "promises-aplus-tests 4.js"
+    "test": "promises-aplus-tests 4.A+规范完整版.js"
   }
 }

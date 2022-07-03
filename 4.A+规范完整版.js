@@ -15,10 +15,12 @@ function resolvePromise(promise2, x, resolve, reject) {
                 // first argument resolvePromise, and second argument rejectPromise
                 // 第一个参数为成功的promise，y => {} 第二个参数为失败的promise  r => {}
                  then.call(x, y => { // 这里的y可能还是一个Promise,递归知道解析出来的结果是一个普通值为止
-                    if(!called) called = true
+                    if(called) return
+                    called = true
                     resolvePromise(promise2, y, resolve, reject) // 采用promise的成功结果，将值向下传递
                  }, r => {
-                    if(!called) called = true
+                    if(called) return
+                    called = true
                     reject(r)  // 采用失败结果向下传递
                  })
             } else {
@@ -26,7 +28,8 @@ function resolvePromise(promise2, x, resolve, reject) {
                 resolve(x)
             }
         } catch (err) {
-            if(!called) called = true
+            if(called) return
+            called = true
             reject(err)
         }
     } else {
@@ -58,7 +61,6 @@ class Promise {
                     this.value = value
                     this.onResolvedCallbacks.forEach(fn => fn())
                 }
-                
             }
         }
         let reject = (reason) => {
@@ -83,28 +85,44 @@ class Promise {
         let promise2 = new Promise((resolve, reject) => {
             if(this.state === FULLFILLED) {
                 setTimeout(() => {
-                    let x = onFullfilled(this.value)
-                    resolvePromise(promise2, x, resolve, reject)  
+                    try {
+                        let x = onFullfilled(this.value)
+                        resolvePromise(promise2, x, resolve, reject)
+                    } catch (err) {
+                        reject(err)
+                    }  
                 }, 0)
             }
             if(this.state === REJECTED) {
                 setTimeout(() => {
-                    let x = onRejected(this.reason)
-                    resolvePromise(promise2, x, resolve, reject)
+                    try {
+                        let x = onRejected(this.reason)
+                        resolvePromise(promise2, x, resolve, reject)
+                    } catch (err) {
+                        reject(err)
+                    }
                 }, 0)
             }
     
             if(this.state === PENDING) {
                 this.onResolvedCallbacks.push(() => {
                     setTimeout(() => {
-                        let x = onFullfilled(this.value)
-                        resolvePromise(promise2, x, resolve, reject)  
+                        try {
+                            let x = onFullfilled(this.value)
+                            resolvePromise(promise2, x, resolve, reject)  
+                        } catch (err) {
+                            reject(err)
+                        }
                     }, 0)
                 })
                 this.onRejectedCallbacks.push(() => {
                     setTimeout(() => {
-                        let x = onRejected(this.reason)
-                        resolvePromise(promise2, x, resolve, reject)
+                        try {
+                            let x = onRejected(this.reason)
+                            resolvePromise(promise2, x, resolve, reject)
+                        } catch (err) {
+                            reject(err)
+                        }
                     }, 0)
                 })
             }
